@@ -7,8 +7,8 @@ const jwt = require('jsonwebtoken')
 const Web3 = require('web3')
 const web3 = new Web3('http://localhost:8545')
 
-const fs = require('fs')
-const contracts = JSON.parse(fs.readFileSync('./contract/contracts.json'))
+const ERC223Token = require('../library/ERC223Token')
+const ERC223TokenContract = new web3.eth.Contract(ERC223Token.abi)
 
 const mysql = require('../library/mysql')
 mysql.connect()
@@ -112,7 +112,7 @@ router.route('/transaction')
 		console.log('payment')
 		console.log(req.body)
 
-		web3.eth.sendSignedTransaction(req.body.tx)
+		web3.eth.sendSignedTransaction(req.body.sign_tx)
 			.on('receipt', function (result) {
 				console.log(result)
 				res.send(result)
@@ -123,30 +123,12 @@ router.route('/transaction')
 			})
 	})
 
-//發送交易
-router.post('/transaction', function (req, res, next) {
-	web3.eth.sendSignedTransaction(req.body.tx)
-		.on('receipt', function (result) {
-			console.log(result)
-			res.send(result);
-		})
-		.on('error', function (err) {
-			console.log(err);
-			res.send(err)
-		})
-})
-
 // 查詢系統
 router.get('/query/balance/:point', async function (req, res) {
 	console.log('balance')
 
-	console.log(req.params.point)
-	console.log(req.query.address)
-
-	let contract = new web3.eth.Contract(contracts.ERC223Token.abi)
-	contract.options.address = point.get(req.params.point)
-	contract.methods.balanceOf(req.query.address).call().then(function (result) {
-		console.log(result)
+	ERC223TokenContract.options.address = point.get(req.params.point)
+	ERC223TokenContract.methods.balanceOf(req.query.address).call().then(function (result) {
 		res.send(result)
 	})
 })
@@ -155,6 +137,15 @@ router.get('/query/transaction', async function (req, res) {
 })
 router.get('/query/transaction/:transactionID', async function (req, res) {
 
+})
+
+router.get('/nonce', function (req, res, next) {
+	console.log('nonce')
+	console.log(req.query)
+	web3.eth.getTransactionCount(req.query.address).then(function (result) {
+		console.log(result)
+		res.send(result.toString())
+	})
 })
 
 module.exports = router
