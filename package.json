@@ -3,16 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "ganache-cli": "ganache-cli"
   },
   "dependencies": {
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
+    "eslint": "^4.19.0",
     "express": "~4.15.5",
     "hbs": "~4.0.1",
+    "jsonwebtoken": "^8.2.0",
     "less-middleware": "~2.2.1",
     "morgan": "~1.9.0",
+    "mysql": "^2.15.0",
     "serve-favicon": "~2.4.5"
+  },
+  "devDependencies": {
+    "eslint-config-google": "^0.9.1"
   }
 }

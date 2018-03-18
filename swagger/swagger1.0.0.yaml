@@ -1,0 +1,202 @@
+swagger: '2.0'
+host: 'localhost:3000'
+info:
+  title: 錢包App
+  description: ERC tokens 錢包
+  version: 1.0.0
+tags:
+  - name: 帳號管理
+  - name: 收付功能
+  - name: 好友管理
+  - name: 查詢系統
+schemes:
+  - http
+  - https
+paths:
+  /user:
+    get:
+      tags:
+        - 帳號管理
+      summary: 登入
+      description: 輸入帳號、密碼進行登入，並提供記憶功能。若選擇記憶會將帳號密碼儲存在手機端的文件檔中，並於取消記憶功能時刪除文件檔。
+      parameters:
+        - name: account
+          description: 使用者帳號
+          type: string
+          in: query
+          required: true
+        - name: password
+          description: 使用者密碼
+          type: string
+          in: query
+          required: true
+      responses:
+        '200':
+          description: 登入成功
+        '401':
+          description: 帳密錯誤
+    post:
+      tags:
+        - 帳號管理
+      summary: 註冊
+      description: 設定帳號(學號)、自定義的密碼、進行交易時的交易密碼，透過 api回傳至資料庫。
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: 成功註冊
+        '400':
+          description: 註冊資料錯誤
+    put:
+      tags:
+        - 帳號管理
+      summary: 更新
+      description: 更改交易密碼、帳號的密碼。
+      parameters:
+        - in: body
+          name: body
+          description: Pet object that needs to be added to the store
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: 更新成功
+        '400':
+          description: 格式錯誤
+    delete:
+      tags:
+        - 帳號管理
+      summary: 登出
+      description: 登出
+      responses:
+        '200':
+          description: Success
+  /transaction:
+    post:
+      tags:
+        - 收付功能
+      summary: 付款
+      description: 輸入欲交易金額以及選擇付款帳號或掃描 QR Code，之後輸入交易密碼。交易結束後透過 api 將交易結果透過 api 傳至手機端及資料庫。
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/Transaction'
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: 目標不存在
+    get:
+      tags:
+        - 收付功能
+      summary: 收款
+      description: 提供帳號或 QR Code 給付款方掃描。
+      responses:
+        '200':
+          description: Success
+  /friend:
+    get:
+      tags:
+        - 好友管理
+      summary: 取得好友列表
+      description: 取的目前所有好友列表。
+      responses:
+        '200':
+          description: Success
+  '/friend/{friendID}':
+    post:
+      tags:
+        - 好友管理
+      summary: 新增好友
+      description: 確認新增好友後，將好友帳號儲存在手機端的文件檔中。
+      parameters:
+        - name: friendID
+          in: path
+          description: 要新增好友的ID
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: 目標不存在
+    delete:
+      tags:
+        - 好友管理
+      summary: 刪除好友
+      description: 將好友帳號從文件檔中刪除。
+      parameters:
+        - name: friendID
+          in: path
+          description: 要刪除好友的ID
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: 目標不存在
+  /query/balance:
+    get:
+      tags:
+        - 查詢系統
+      summary: 查詢帳戶餘額
+      description: 查詢帳戶餘額
+      responses:
+        '200':
+          description: Success
+  /query/transaction:
+    get:
+      tags:
+        - 查詢系統
+      summary: 查詢所有交易紀錄
+      description: 查詢交易紀錄
+      responses:
+        '200':
+          description: Success
+  '/query/transaction/{transactionID}':
+    get:
+      tags:
+        - 查詢系統
+      summary: 查詢所有交易紀錄
+      description: 查詢交易紀錄
+      parameters:
+        - name: transactionID
+          in: path
+          description: 查詢交易ID
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+definitions:
+  User:
+    type: object
+    properties:
+      studentID:
+        type: string
+      password:
+        type: string
+      transactionPassword:
+        type: string
+  Payment:
+    type: object
+    properties:
+      amount:
+        type: number
+      transactionPassword:
+        type: string
+      targetID:
+        type: string
+  Transaction:
+    type: object
+    properties:
+      transactionID:
+        type: string

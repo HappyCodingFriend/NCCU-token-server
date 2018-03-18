@@ -28,3 +28,9 @@ node_modules
 
 # Debug log from npm
 npm-debug.log
+
+# credential data
+library/credential.js
+
+# eslint configuration
+.eslintrc.json
