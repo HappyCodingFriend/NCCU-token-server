@@ -22,29 +22,31 @@ function connect() {
 	})
 }
 
+//user
 async function sing_in(ID, password) {
 	try {
 		let user = await getUserByID(ID)
 
 		if (!user) {
-			return { type: 1, inf: '查無此帳號' }
+			return { type: false, inf: '查無此帳號', code: 200 }
 		}
 		else if (user.password != password) {
-			return { type: 2, inf: '密碼錯誤' }
+			return { type: false, inf: '密碼錯誤', code: 200 }
 		}
 		else if (user.password == password) {
-			return { type: 0, inf: '登入成功', ID: user.ID, name: user.name }
+			return { type: true, inf: '登入成功', code: 200, ID: user.ID, name: user.name, address: user.address }
 		}
 	} catch (err) {
 		console.error(err)
 	}
 }
 
-async function sing_up(ID, password, name, identity, email, phone, birthday, address, account) {
+async function sing_up(ID, password, name, email, address) {
 	try {
 		let user = await getUserByID(ID)
 		if (!user) {
-			let result = await addUser(ID, password, name, identity, email, phone, birthday, address, account)
+			let result = await addUser(ID, password, name, email, address)
+			console.log('sing up result', result)
 			return { type: true, inf: '註冊成功' }
 		}
 		else {
@@ -52,6 +54,21 @@ async function sing_up(ID, password, name, identity, email, phone, birthday, add
 		}
 	} catch (err) {
 		console.error(err)
+	}
+
+	function addUser(ID, password, name, email, address) {
+		let cmd = "INSERT INTO user (ID, password, name, email, address) VALUES ?"
+		let value = [ID, password, name, email, address]
+
+		return new Promise(function (resolve, reject) {
+			connection.query(cmd, [[value]], (err, result) => {
+				if (!err) {
+					resolve(result)
+				} else {
+					reject(err)
+				}
+			})
+		})
 	}
 }
 
@@ -68,48 +85,22 @@ function getUserByID(ID) {
 	})
 }
 
-function addUser(ID, password, name, identity, email, phone, birthday, address, account, isHosted) {
-	let cmd = "INSERT INTO user (ID, password, name, identity, email, phone, birthday, address, account) VALUES ?"
-	let value = [
-		[ID, password, name, identity, email, phone, birthday, address, account]
-	];
-	return new Promise(function (resolve, reject) {
-		connection.query(cmd, [value], (err, result) => {
-			if (!err) {
-				resolve(result)
-			} else {
-				reject(err)
-			}
-		})
-	})
+//friend
+function setFriend() {
+
 }
 
-function getAccountCount() {
-	let cmd = "SELECT count(account) FROM user";
-	connection.query(cmd, (err, result) => {
-		if (!err) {
-			return result
-		}
-		else {
-			console.log(err)
-		}
-	})
+function getFriend() {
+
 }
 
+//Verification
 function setVerification(ID, code) {
-	let cmd = "UPDATE user SET verification = '" + code + "' WHERE ID = '" + ID + "' "
-	connection.query(cmd)
+
 }
 
 function getVerification(ID, callback) {
-	let cmd = "SELECT verification FROM user WHERE ID = ?"
-	connection.query(cmd, [ID], (err, result) => {
-		if (!err) {
-			callback(result)
-		} else {
-			console.log(err)
-		}
-	})
+
 }
 
 module.exports = {
@@ -119,7 +110,8 @@ module.exports = {
 	sing_in,
 	sing_up,
 
-	getUserByID,
+	setFriend,
+	getFriend,
 
 	setVerification,
 	getVerification,
