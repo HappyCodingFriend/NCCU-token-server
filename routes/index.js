@@ -15,6 +15,8 @@ mysql.connect()
 
 const point = new Map()
 point.set('dormitory', '0x2CA6Dacbf2db0e04c8f7A73E27C385129A2b40cf')
+point.set('academic', '0x5f16A398b338c6aeecD5bb2d4e851816d5b05a3d')
+point.set('student', '0x64ea6D99636AEe83B15D35a9d7CB73E9ae8242Ae')
 
 let jwtCheck = async function (req, res, next) {
 	console.log('jwt check')
