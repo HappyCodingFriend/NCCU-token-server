@@ -13,19 +13,14 @@ const ERC223TokenContract = new web3.eth.Contract(ERC223Token.abi)
 const mysql = require('../library/mysql')
 mysql.connect()
 
-const point = new Map()
-point.set('dormitory', '0x2CA6Dacbf2db0e04c8f7A73E27C385129A2b40cf')
-point.set('academic', '0x5f16A398b338c6aeecD5bb2d4e851816d5b05a3d')
-point.set('student', '0x64ea6D99636AEe83B15D35a9d7CB73E9ae8242Ae')
+console.log(process.env.DB_HOST)
 
-let jwtCheck = async function (req, res, next) {
+let jwtCheck = function (req, res, next) {
 	console.log('jwt check')
-
-	console.log(req.body)
-	let decoded = jwt.verify(req.body.token, 'secret', function (err, decoded) {
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
 		if (err) {
 			console.error(err)
-			res.status(400).send({ error: 'jwtInvalidError' })
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
 		}
 		else {
 			console.log(decoded)
@@ -34,69 +29,159 @@ let jwtCheck = async function (req, res, next) {
 	})
 }
 
-// 帳號管理
-router.route('/user')
-	//登入
-	.get(async function (req, res) {
-		console.log('sign_in')
-		console.log(req.query)
+router.get('/check', function (req, res) {
+	console.log('check')
+	console.log(req.query)
 
-		if (!(req.query.ID && req.query.password)) {
-			res.status(200).json({ type: false, inf: '資料缺失' })
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
 		}
 		else {
-			let result = await mysql.sing_in(req.query.ID, req.query.password)
+			decoded.type = true
+			console.log(decoded)
+			res.json(decoded)
+		}
+	})
+})
+
+//登入
+router.post('/signIn', function (req, res) {
+	console.log('sign in')
+	console.log(req.body)
+
+	if (!(req.body.ID && req.body.password)) {
+		res.status(200).json({ type: false, inf: '資料缺失' })
+	}
+	else {
+		mysql.sing_in(req.body.ID, req.body.password, (result) => {
 			if (result.type) {
 				let data = {
 					ID: result.ID,
-					name: result.name,
+					email: result.email,
 					address: result.address,
 				}
 				let time = {
-					expiresIn: '1h'
+					expiresIn: '24h'
 				}
 				result.token = jwt.sign(data, 'secret', time)
 			}
 			console.log(result)
-			res.status(result.code).json(result)
-		}
+			res.json(result)
+		})
+	}
+})
+
+//註冊
+router.post('signUp', function (req, res) {
+	console.log('sign up')
+	console.log(req.body)
+
+	if (!(req.body.ID && req.body.password && req.body.name && req.body.email && req.body.address)) {
+		res.json({ type: false, inf: '資料缺失' })
+	}
+	else {
+		mysql.sing_up(req.body.ID, req.body.password, req.body.name, req.body.email, req.body.address, (result) => {
+			res.json(result)
+		})
+	}
+})
+
+// 會員管理
+router.route('/user')
+	//登入
+	.get(function (req, res) {
+
 	})
 	//註冊
-	.post(async function (req, res) {
-		console.log('sign_up')
-		console.log(req.body)
+	.post(function (req, res) {
 
-		if (!(req.body.ID && req.body.password && req.body.name && req.body.email)) {
-			res.json({ type: false, inf: '資料缺失' })
-		}
-		else {
-			let result = await mysql.sing_up(req.body.ID, req.body.password, req.body.name, req.body.email)
-			res.json(result)
-		}
 	})
 	//更新
-	.put(jwtCheck, function (req, res, next) {
+	.put(function (req, res, next) {
 		console.log('sign_update')
-		res.json({ '123': 123 })
+		let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+			if (err) {
+				console.error(err)
+				res.status(400).send({ type: false, error: 'jwtInvalidError' })
+			}
+			else {
+				console.log(decoded.ID, req.body.address)
+				mysql.updateUser(decoded.ID, req.body.address, (result) => {
+					console.log(result)
+					res.json(result)
+				})
+			}
+		})
 	})
-	//登出
-	.delete(jwtCheck, function (req, res, next) {
-		console.log('sign_out')
-		res.json({ '123': 123 })
+
+// 點數列表
+router.get('/points', function (req, res) {
+	console.log('points')
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
+		}
+		else {
+			mysql.getPoints(result => {
+				res.json(result)
+			})
+		}
 	})
+})
+
+// 點數
+router.get('/point/:address', function (req, res) {
+	console.log('point')
+	console.log(req.params.address)
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
+		}
+		else {
+			ERC223TokenContract.options.address = req.params.address
+			ERC223TokenContract.methods.balanceOf(decoded.address).call().then(function (result) {
+				res.send(result)
+			})
+		}
+	})
+})
 
 // 好友管理
-router.get('friend', async function (req, res) {
-
+router.get('/friends', async function (req, res) {
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
+		}
+		else {
+			mysql.getFriends(decoded.ID, (result) => {
+				res.json(result)
+			})
+		}
+	})
 })
-router.route('friend/:friendID')
+router.route('/friend/:friendID')
 	//取得好友
 	.get(async function (req, res) {
 
 	})
 	//新增好友
 	.post(async function (req, res) {
-
+		let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+			if (err) {
+				console.error(err)
+				res.status(400).send({ type: false, error: 'jwtInvalidError' })
+			}
+			else {
+				mysql.addFriend(decoded.ID, req.params.friendID, (result) => {
+					res.json(result)
+				})
+			}
+		})
 	})
 	//刪除好友
 	.delete(async function (req, res) {
@@ -114,29 +199,60 @@ router.route('/transaction')
 		console.log('payment')
 		console.log(req.body)
 
-		web3.eth.sendSignedTransaction(req.body.sign_tx)
-			.on('receipt', function (result) {
-				console.log(result)
-				res.send(result)
-			})
-			.on('error', function (err) {
-				console.log(err)
-				res.send(err)
-			})
+		let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+			if (err) {
+				console.error(err)
+				res.status(400).send({ type: false, error: 'jwtInvalidError' })
+			}
+			else {
+				web3.eth.sendSignedTransaction(req.body.sign_tx)
+					.on('receipt', function (result) {
+						console.log(result)
+						console.log(decoded.ID, req.body.targetID, req.body.number, req.body.ercName, result.transactionHash)
+						mysql.setTransaction(decoded.ID, req.body.targetID, req.body.number, req.body.ercName, result.transactionHash, () => {
+							res.json(result)
+						})
+					})
+					.on('error', function (err) {
+						console.log(err)
+						res.send(err)
+					})
+			}
+		})
 	})
 
 // 查詢系統
-router.get('/query/balance/:point', async function (req, res) {
-	console.log('balance')
+router.get('/query/transactionsTo', async function (req, res) {
+	console.log('query/transactions')
 
-	ERC223TokenContract.options.address = point.get(req.params.point)
-	ERC223TokenContract.methods.balanceOf(req.query.address).call().then(function (result) {
-		res.send(result)
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
+		}
+		else {
+			mysql.gatTransactionsTo(decoded.ID, (result) => {
+				res.json(result)
+			})
+		}
 	})
 })
-router.get('/query/transaction', async function (req, res) {
+router.get('/query/transactionsFrom', async function (req, res) {
+	console.log('query/transactions')
 
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
+		}
+		else {
+			mysql.gatTransactionsFrom(decoded.ID, (result) => {
+				res.json(result)
+			})
+		}
+	})
 })
+
 router.get('/query/transaction/:transactionID', async function (req, res) {
 
 })

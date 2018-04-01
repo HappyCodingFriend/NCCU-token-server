@@ -1,18 +1,17 @@
 const mysql = require('mysql')
 const setting = require('./setting')
-const credential = require('./credential')
 
 const connection = mysql.createConnection({
-	host: setting.mysql.host,
-	user: credential.mysql.user,
-	password: credential.mysql.password,
-	database: setting.mysql.database,
+	host: process.env.SQL_HOST,
+	user: process.env.SQL_USER,
+	password: process.env.SQL_PASSWORD,
+	database: process.env.SQL_DATABASE,
 })
 
 function connect() {
 	connection.connect((err) => {
 		if (err) {
-			console.log('error when connecting to db:', err)
+			console.error('error when connecting to db:', err)
 			// 10秒後重新連線
 			setTimeout(connect, 10000)
 		}
@@ -23,71 +22,105 @@ function connect() {
 }
 
 //user
-async function sing_in(ID, password) {
-	try {
-		let user = await getUserByID(ID)
-
+function sing_in(ID, password, callback) {
+	getUserByID(ID, (user) => {
 		if (!user) {
-			return { type: false, inf: '查無此帳號', code: 200 }
+			callback({ type: false, inf: '查無此帳號' })
 		}
 		else if (user.password != password) {
-			return { type: false, inf: '密碼錯誤', code: 200 }
+			callback({ type: false, inf: '密碼錯誤' })
 		}
 		else if (user.password == password) {
-			return { type: true, inf: '登入成功', code: 200, ID: user.ID, name: user.name, address: user.address }
+			callback({ type: true, inf: '登入成功', ID: user.ID, name: user.name, address: user.address })
 		}
-	} catch (err) {
-		console.error(err)
-	}
+	})
 }
 
-async function sing_up(ID, password, name, email, address) {
-	try {
-		let user = await getUserByID(ID)
-		if (!user) {
-			let result = await addUser(ID, password, name, email, address)
-			console.log('sing up result', result)
-			return { type: true, inf: '註冊成功' }
-		}
-		else {
-			return { type: false, inf: '此帳號已有人註冊過' }
-		}
-	} catch (err) {
-		console.error(err)
-	}
-
-	function addUser(ID, password, name, email, address) {
-		let cmd = "INSERT INTO user (ID, password, name, email, address) VALUES ?"
-		let value = [ID, password, name, email, address]
-
-		return new Promise(function (resolve, reject) {
-			connection.query(cmd, [[value]], (err, result) => {
-				if (!err) {
-					resolve(result)
-				} else {
-					reject(err)
-				}
-			})
-		})
-	}
-}
-
-function getUserByID(ID) {
-	let cmd = "SELECT * FROM user WHERE ID = ?";
-	return new Promise(function (resolve, reject) {
-		connection.query(cmd, [ID], (err, result) => {
-			if (!err) {
-				resolve(result[0])
-			} else {
-				reject(err)
+function sing_up(ID, password, name, email, address, callback) {
+	getUserByID(ID, (user) => {
+		getUserByID(ID, (user) => {
+			if (!user) {
+				addUser(ID, password, name, email, address, (result) => {
+					console.log('sing up result', result)
+					callback({ type: true, inf: '註冊成功' })
+				})
+			}
+			else {
+				callback({ type: false, inf: '此帳號已有人註冊過' })
 			}
 		})
+	})
+	function addUser(ID, password, name, email, address, callback) {
+		let cmd = "INSERT INTO user (ID, password, name, email, address) VALUES ?"
+		let value = [ID, password, name, email, address]
+		connection.query(cmd, [[value]], (err, result) => {
+			if (err) {
+				console.error(err)
+			} else {
+				callback(result)
+			}
+		})
+	}
+}
+
+function updateUser(ID, address, callback) {
+	let cmd = "UPDATE user SET address = ? WHERE ID = ?";
+	connection.query(cmd, [[address], [ID]], (err, result) => {
+		if (err) {
+			console.error(err)
+		} else {
+			callback(result)
+		}
+	})
+}
+
+function getUserByID(ID, callback) {
+	let cmd = "SELECT * FROM user WHERE ID = ?";
+	connection.query(cmd, [ID], (err, result) => {
+		if (err) {
+			console.error(err)
+		} else {
+			callback(result[0])
+		}
+	})
+}
+
+//point
+function getPoints(callback) {
+	let cmd = 'SELECT * FROM point'
+	connection.query(cmd, (err, result) => {
+		if (err) {
+			console.error(err)
+		}
+		else {
+			callback(result)
+		}
 	})
 }
 
 //friend
-function setFriend() {
+function getFriends(ID, callback) {
+	let cmd = 'SELECT friend.ID, friend.friendID, user.name, user.email, user.address FROM friend left JOIN user ON friend.friendID = user.ID WHERE friend.ID = ?;'
+	connection.query(cmd, [ID], (err, result) => {
+		if (err) {
+			console.error(err)
+		}
+		else {
+			callback(result)
+		}
+	})
+}
 
+function addFriend(ID, friendID, callback) {
+	let cmd = "INSERT INTO friend (ID, friendID) VALUES ?"
+	let value = [ID, friendID]
+	connection.query(cmd, [[value]], (err, result) => {
+		if (err) {
+			console.error(err)
+		} else {
+			callback(result)
+		}
+	})
 }
 
 function getFriend() {
@@ -95,12 +128,44 @@ function getFriend() {
 }
 
 //Verification
-function setVerification(ID, code) {
+function gatTransactionsTo(ID, callback) {
+	let cmd = 'SELECT * FROM transaction WHERE ID = ?;'
+	connection.query(cmd, [ID], (err, result) => {
+		if (err) {
+			console.error(err)
+		}
+		else {
+			callback(result)
+		}
+	})
+}
+
+function gatTransactionsFrom(ID, callback) {
+	let cmd = 'SELECT * FROM transaction WHERE targetID = ?;'
+	connection.query(cmd, [ID], (err, result) => {
+		if (err) {
+			console.error(err)
+		}
+		else {
+			callback(result)
+		}
+	})
+}
+
+function gatTransaction(ID, txHash, callback) {
 
 }
 
-function getVerification(ID, callback) {
-
+function setTransaction(ID, targetID, number, ercName, txHash, callback) {
+	let cmd = "INSERT INTO transaction (ID, targetID, number, ercName, txHash) VALUES ?"
+	let value = [ID, targetID, number, ercName, txHash]
+	connection.query(cmd, [[value]], (err, result) => {
+		if (err) {
+			console.error(err)
+		} else {
+			callback(result)
+		}
+	})
 }
 
 module.exports = {
@@ -109,10 +174,16 @@ module.exports = {
 
 	sing_in,
 	sing_up,
+	updateUser,
 
-	setFriend,
+	getPoints,
+
+	getFriends,
+	addFriend,
 	getFriend,
 
-	setVerification,
-	getVerification,
+	gatTransactionsTo,
+	gatTransactionsFrom,
+	gatTransaction,
+	setTransaction,
 }

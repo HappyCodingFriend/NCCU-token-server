@@ -34,3 +34,6 @@ library/credential.js
 
 # eslint configuration
 .eslintrc.json
+
+# environment file
+.env

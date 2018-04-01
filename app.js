@@ -7,6 +7,8 @@ const bodyParser = require('body-parser')
 const lessMiddleware = require('less-middleware')
 const cors = require('cors')
 
+require('dotenv').config()
+
 const index = require('./routes/index')
 const users = require('./routes/users')
 
