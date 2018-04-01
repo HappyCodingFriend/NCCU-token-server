@@ -1,5 +1,4 @@
 const mysql = require('mysql')
-const setting = require('./setting')
 
 const connection = mysql.createConnection({
 	host: process.env.SQL_HOST,

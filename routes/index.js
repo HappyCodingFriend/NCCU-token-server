@@ -13,8 +13,6 @@ const ERC223TokenContract = new web3.eth.Contract(ERC223Token.abi)
 const mysql = require('../library/mysql')
 mysql.connect()
 
-console.log(process.env.DB_HOST)
-
 let jwtCheck = function (req, res, next) {
 	console.log('jwt check')
 	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {

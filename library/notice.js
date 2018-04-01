@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer')
-const credentials = require("./credentials")
 const request = require('request')
 
 const mailTransport = nodemailer.createTransport({
