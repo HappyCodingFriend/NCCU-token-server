@@ -84,6 +84,22 @@ function getUserByID(ID, callback) {
 	})
 }
 
+function getUser(ID, callback) {
+	let cmd = "SELECT ID, name, address FROM user WHERE ID = ?";
+	connection.query(cmd, [ID], (err, result) => {
+		if (err) {
+			console.error(err)
+		} else {
+			if (!result[0])
+				callback({ type: false, inf: '查無此使用者' })
+			else {
+				callback({ type: true, inf: result[0] })
+
+			}
+		}
+	})
+}
+
 //point
 function getPoints(callback) {
 	let cmd = 'SELECT * FROM point'
@@ -111,13 +127,20 @@ function getFriends(ID, callback) {
 }
 
 function addFriend(ID, friendID, callback) {
-	let cmd = "INSERT INTO friend (ID, friendID) VALUES ?"
-	let value = [ID, friendID]
-	connection.query(cmd, [[value]], (err, result) => {
-		if (err) {
-			console.error(err)
-		} else {
-			callback(result)
+	getUserByID(friendID, (user) => {
+		if (!user) {
+			callback({ type: false, inf: '查無此帳號' })
+		}
+		else {
+			let cmd = "INSERT INTO friend (ID, friendID) VALUES ?"
+			let value = [ID, friendID]
+			connection.query(cmd, [[value]], (err, result) => {
+				if (err) {
+					console.error(err)
+				} else {
+					callback({ type: true, inf: '新增成功' })
+				}
+			})
 		}
 	})
 }
@@ -144,6 +167,7 @@ function gatTransactionsFrom(ID, callback) {
 	connection.query(cmd, [ID], (err, result) => {
 		if (err) {
 			console.error(err)
+			callback(err)
 		}
 		else {
 			callback(result)
@@ -155,12 +179,48 @@ function gatTransaction(ID, txHash, callback) {
 
 }
 
-function setTransaction(ID, targetID, number, ercName, txHash, callback) {
-	let cmd = "INSERT INTO transaction (ID, targetID, number, ercName, txHash) VALUES ?"
-	let value = [ID, targetID, number, ercName, txHash]
+function setTransaction(ID, targetID, number, point, txHash, callback) {
+	let cmd = "INSERT INTO transaction (ID, targetID, number, point, txHash) VALUES ?"
+	let value = [ID, targetID, number, point, txHash]
 	connection.query(cmd, [[value]], (err, result) => {
 		if (err) {
 			console.error(err)
+			callback(err)
+		} else {
+			callback(result)
+		}
+	})
+}
+
+function getOrders(callback) {
+	let cmd = "SELECT * FROM nccu_token.order WHERE buyer IS NULL"
+	connection.query(cmd, (err, result) => {
+		if (err) {
+			console.error(err)
+			callback(err)
+		} else {
+			callback(result)
+		}
+	})
+}
+
+function addOrder(address, owner, point1, value1, point2, value2, callback) {
+	let cmd = "INSERT INTO nccu_token.order (address, owner, point1, value1, point2, value2) VALUES ?"
+	let value = [address, owner, point1, value1, point2, value2]
+	connection.query(cmd, [[value]], (err, result) => {
+		if (err) {
+			callback(err)
+		} else {
+			callback(result)
+		}
+	})
+}
+
+function updateOrder(autoID, buyer, callback) {
+	let cmd = "UPDATE nccu_token.order SET buyer = ? WHERE autoID = ?";
+	connection.query(cmd, [[buyer], [autoID]], (err, result) => {
+		if (err) {
+			callback(err)
 		} else {
 			callback(result)
 		}
@@ -173,6 +233,8 @@ module.exports = {
 
 	sing_in,
 	sing_up,
+
+	getUser,
 	updateUser,
 
 	getPoints,
@@ -185,4 +247,8 @@ module.exports = {
 	gatTransactionsFrom,
 	gatTransaction,
 	setTransaction,
+
+	getOrders,
+	addOrder,
+	updateOrder,
 }
