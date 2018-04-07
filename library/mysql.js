@@ -30,7 +30,7 @@ function sing_in(ID, password, callback) {
 			callback({ type: false, inf: '密碼錯誤' })
 		}
 		else if (user.password == password) {
-			callback({ type: true, inf: '登入成功', ID: user.ID, name: user.name, address: user.address })
+			callback({ type: true, inf: '登入成功', ID: user.ID, name: user.name, email: user.email ,address: user.address })
 		}
 	})
 }
@@ -145,6 +145,25 @@ function addFriend(ID, friendID, callback) {
 	})
 }
 
+function deleteFriend(ID, friendID, callback) {
+	getUserByID(friendID, (user) => {
+		if (!user) {
+			callback({ type: false, inf: '查無此帳號' })
+		}
+		else {
+			let cmd = "DELETE FROM friend WHERE ID = ? AND friendID = ?"
+			let value = [[ID], [friendID]]
+			connection.query(cmd, [value], (err, result) => {
+				if (err) {
+					console.error(err)
+				} else {
+					callback({ type: true, inf: '新增成功' })
+				}
+			})
+		}
+	})
+}
+
 function getFriend() {
 
 }
@@ -241,6 +260,7 @@ module.exports = {
 
 	getFriends,
 	addFriend,
+	deleteFriend,
 	getFriend,
 
 	gatTransactionsTo,

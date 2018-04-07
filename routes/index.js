@@ -175,7 +175,17 @@ router.route('/friend/:friendID')
 	})
 	//刪除好友
 	.delete(function (req, res) {
-
+		let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+			if (err) {
+				console.error(err)
+				res.status(400).send({ type: false, error: 'jwtInvalidError' })
+			}
+			else {
+				mysql.deleteFriend(decoded.ID, req.params.friendID, (result) => {
+					res.json(result)
+				})
+			}
+		})
 	})
 
 // 收支功能
