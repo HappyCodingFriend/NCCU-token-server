@@ -333,6 +333,34 @@ router.get('/query/transaction/:transactionID', function (req, res) {
 
 })
 
+router.get('/query/orderTo', function (req, res) {
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
+		}
+		else {
+			mysql.getOrderTo(decoded.ID, (result) => {
+				res.json(result)
+			})
+		}
+	})
+})
+
+router.get('/query/orderFrom', function (req, res) {
+	let decoded = jwt.verify(req.query.token, 'secret', function (err, decoded) {
+		if (err) {
+			console.error(err)
+			res.status(400).send({ type: false, error: 'jwtInvalidError' })
+		}
+		else {
+			mysql.getOrderFrom(decoded.ID, (result) => {
+				res.json(result)
+			})
+		}
+	})
+})
+
 router.get('/nonce', function (req, res, next) {
 	console.log('nonce')
 

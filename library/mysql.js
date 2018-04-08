@@ -30,7 +30,7 @@ function sing_in(ID, password, callback) {
 			callback({ type: false, inf: '密碼錯誤' })
 		}
 		else if (user.password == password) {
-			callback({ type: true, inf: '登入成功', ID: user.ID, name: user.name, email: user.email ,address: user.address })
+			callback({ type: true, inf: '登入成功', ID: user.ID, name: user.name, email: user.email, address: user.address })
 		}
 	})
 }
@@ -223,6 +223,30 @@ function getOrders(callback) {
 	})
 }
 
+function getOrderTo(ID, callback) {
+	let cmd = "SELECT * FROM nccu_token.order WHERE owner = ?"
+	connection.query(cmd, [ID], (err, result) => {
+		if (err) {
+			console.error(err)
+			callback(err)
+		} else {
+			callback(result)
+		}
+	})
+}
+
+function getOrderFrom(ID, callback) {
+	let cmd = "SELECT * FROM nccu_token.order WHERE buyer = ?"
+	connection.query(cmd, [ID], (err, result) => {
+		if (err) {
+			console.error(err)
+			callback(err)
+		} else {
+			callback(result)
+		}
+	})
+}
+
 function addOrder(address, owner, point1, value1, point2, value2, callback) {
 	let cmd = "INSERT INTO nccu_token.order (address, owner, point1, value1, point2, value2) VALUES ?"
 	let value = [address, owner, point1, value1, point2, value2]
@@ -269,6 +293,8 @@ module.exports = {
 	setTransaction,
 
 	getOrders,
+	getOrderTo,
+	getOrderFrom,
 	addOrder,
 	updateOrder,
 }

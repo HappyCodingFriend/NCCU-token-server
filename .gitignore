@@ -37,3 +37,6 @@ library/credential.js
 
 # environment file
 .env
+
+# chain data
+ganachedata/
