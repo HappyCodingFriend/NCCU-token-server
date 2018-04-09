@@ -22,7 +22,11 @@ CREATE TABLE `order` (
 
 CREATE TABLE `point` (
   `address` varchar(45) NOT NULL,
+  `unit` varchar(45) NOT NULL,
   `name` varchar(20) NOT NULL,
+  `owner` varchar(65) NOT NULL,
+  `deadline` datetime NOT NULL,
+  `valid` tinyint(4) NOT NULL DEFAULT '1',
   PRIMARY KEY (`address`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
