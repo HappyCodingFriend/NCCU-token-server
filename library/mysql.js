@@ -170,7 +170,13 @@ function getFriend() {
 
 //Verification
 function gatTransactionsTo(ID, callback) {
-	let cmd = 'SELECT * FROM transaction WHERE ID = ?;'
+	let cmd = `
+		SELECT transaction.* , user.name , target.name as targetName
+		FROM transaction 
+		left JOIN user ON transaction.ID = user.ID
+		left JOIN user as target ON transaction.targetID = target.ID 
+		WHERE transaction.ID = ?;
+	`
 	connection.query(cmd, [ID], (err, result) => {
 		if (err) {
 			console.error(err)
@@ -182,7 +188,13 @@ function gatTransactionsTo(ID, callback) {
 }
 
 function gatTransactionsFrom(ID, callback) {
-	let cmd = 'SELECT * FROM transaction WHERE targetID = ?;'
+	let cmd = `
+		SELECT transaction.* , user.name , target.name as targetName
+		FROM transaction 
+		left JOIN user ON transaction.ID = user.ID
+		left JOIN user as target ON transaction.targetID = target.ID 
+		WHERE transaction.targetID = ?;
+	`
 	connection.query(cmd, [ID], (err, result) => {
 		if (err) {
 			console.error(err)
@@ -212,7 +224,12 @@ function setTransaction(ID, targetID, number, point, txHash, callback) {
 }
 
 function getOrders(callback) {
-	let cmd = "SELECT * FROM nccu_token.order WHERE buyer IS NULL"
+	let cmd = `
+		SELECT nccu_token.order.*, user.name as ownerName
+		FROM nccu_token.order 
+		left JOIN user ON nccu_token.order.owner = user.ID
+		WHERE buyer IS NULL
+	`
 	connection.query(cmd, (err, result) => {
 		if (err) {
 			console.error(err)
@@ -224,7 +241,13 @@ function getOrders(callback) {
 }
 
 function getOrderTo(ID, callback) {
-	let cmd = "SELECT * FROM nccu_token.order WHERE owner = ?"
+	let cmd = `
+		SELECT nccu_token.order.*, user1.name as ownerName, user2.name as buyerName 
+		FROM nccu_token.order
+		left JOIN user as user1 ON nccu_token.order.owner = user1.ID
+		left JOIN user as user2 ON nccu_token.order.buyer = user2.ID
+		WHERE owner = ?;
+	`
 	connection.query(cmd, [ID], (err, result) => {
 		if (err) {
 			console.error(err)
@@ -236,7 +259,13 @@ function getOrderTo(ID, callback) {
 }
 
 function getOrderFrom(ID, callback) {
-	let cmd = "SELECT * FROM nccu_token.order WHERE buyer = ?"
+	let cmd = `
+		SELECT nccu_token.order.*, user1.name as ownerName, user2.name as buyerName 
+		FROM nccu_token.order
+		left JOIN user as user1 ON nccu_token.order.owner = user1.ID
+		left JOIN user as user2 ON nccu_token.order.buyer = user2.ID
+		WHERE buyer = ?
+	`
 	connection.query(cmd, [ID], (err, result) => {
 		if (err) {
 			console.error(err)

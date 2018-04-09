@@ -322,6 +322,7 @@ router.get('/query/transactionsFrom', function (req, res) {
 			res.status(400).send({ type: false, error: 'jwtInvalidError' })
 		}
 		else {
+			console.log(decoded.ID)
 			mysql.gatTransactionsFrom(decoded.ID, (result) => {
 				res.json(result)
 			})
