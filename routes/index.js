@@ -5,7 +5,7 @@ const router = express.Router()
 const jwt = require('jsonwebtoken')
 
 const Web3 = require('web3')
-const web3 = new Web3('http://localhost:8545')
+const web3 = new Web3('http://localhost:8546')
 
 const ERC223Token = require('../library/ERC223Token')
 const ERC223TokenContract = new web3.eth.Contract(ERC223Token.abi)

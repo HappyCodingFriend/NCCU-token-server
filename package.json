@@ -5,7 +5,7 @@
 	"scripts": {
 		"start": "node ./bin/www",
 		"forever": "forever start --minUptime 1000 --spinSleepTime 1000 -a -l forever.log -o forever/out.log -e forever/err.log ./bin/www",
-		"ganache-cli": "ganache-cli --port 8545 --gasPrice 0 --db ./ganachedata"
+		"ganache-cli": "ganache-cli --port 8546 --blockTime 5 --gasPrice 0 --db ./ganachedata"
 	},
 	"dependencies": {
 		"body-parser": "~1.18.2",
@@ -21,7 +21,7 @@
 		"morgan": "~1.9.0",
 		"mysql": "^2.15.0",
 		"serve-favicon": "~2.4.5",
-		"web3": "^1.0.0-beta.31"
+		"web3": "^1.0.0-beta.34"
 	},
 	"devDependencies": {
 		"eslint-config-google": "^0.9.1"

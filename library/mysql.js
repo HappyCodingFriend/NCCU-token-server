@@ -152,12 +152,12 @@ function deleteFriend(ID, friendID, callback) {
 		}
 		else {
 			let cmd = "DELETE FROM friend WHERE ID = ? AND friendID = ?"
-			let value = [[ID], [friendID]]
-			connection.query(cmd, [value], (err, result) => {
+			let value = [ID, friendID]
+			connection.query(cmd, value, (err, result) => {
 				if (err) {
 					console.error(err)
 				} else {
-					callback({ type: true, inf: '新增成功' })
+					callback({ type: true, inf: '刪除成功' })
 				}
 			})
 		}
